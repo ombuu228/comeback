@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+    <style>
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    margin: 0;
+    background-color: #f0f0f0;
+}
+
+#app {
+    text-align: center;
+    padding: 20px;
+    border-radius: 10px;
+    background-color: #ffffff;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+    animation: fadeIn 0.8s ease-in-out;
+    width: 90%;
+    max-width: 600px;
+    overflow-y: auto;
+}
+
+label {
+    display: block;
+    margin-bottom: 10px;
+    text-align: left;
+}
+
+input,
+select,
+button {
+    padding: 12px;
+    margin-bottom: 20px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+button {
+    background-color: #4caf50;
+    color: #fff;
+    cursor: pointer;
+    transition: background-color 0.3s ease, border 0.3s ease, transform 0.2s ease;
+    border: none;
+}
+
+button:hover {
+    background-color: #45a049;
+    border: 1px solid #45a049;
+    transform: scale(1.02);
+}
+
+#calendar {
+    display: flex;
+    flex-wrap: wrap;
+    margin: 20px 0;
+    gap: 20px;
+    justify-content: center;
+}
+
+.day {
+    flex: 0 0 calc(50% - 20px);
+    max-width: calc(50% - 20px);
+    margin: 20px;
+    position: relative;
+    overflow: hidden;
+    animation: bounceIn 0.8s ease-in-out;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+    border-radius: 12px;
+    background-color: #fff;
+}
+
+.day button {
+    width: 100%;
+    padding: 8px;
+    margin-top: 8px;
+    border: none;
+    background-color: #4caf50;
+    color: #fff;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.day button:hover {
+    background-color: #45a049;
+}
+
+.checkmark,
+.cross {
+    font-size: 24px;
+    margin-top: 10px;
+    display: none;
+}
+
+.checkmark {
+    color: #4caf50;
+}
+
+.cross {
+    color: #d9534f;
+}
+
+@media (min-width: 768px) {
+    #app {
+        width: 80%;
+    }
+
+    .day {
+        flex: 0 0 calc(33.33% - 20px);
+        max-width: calc(33.33% - 20px);
+    }
+}
+
+    </style>
+    <title>Return Calendar</title>
+</head>
+
+<body>
+    <div id="app">
+        <label for="lossAmount">Потеряные деньги:</label>
+        <input type="number" id="lossAmount">
+
+        <label for="days">Количество дней:</label>
+        <select id="days">
+            <option value="1">1 day</option>
+            <option value="2">2 days</option>
+            <option value="5">5 days</option>
+            <option value="7">7 days</option>
+            <option value="10">10 days</option>
+            <option value="15">15 days</option>
+            <option value="20">20 days</option>
+            <option value="25">25 days</option>
+            <option value="30">30 days</option>
+        </select>
+
+        <button onclick="calculateCalendar()">Расчитать</button>
+        <button onclick="clearCalendar()">Очистить календарь</button>
+        <div id="remainingAmount" style="margin-bottom: 20px; font-weight: bold;"></div>
+        <div id="calendar"></div>
+        <div id="calendar"></div>
+    </div>
+
+    <script>
+        function saveLoss() {
+            const lossAmount = document.getElementById('lossAmount').value;
+            localStorage.setItem('lossAmount', lossAmount);
+            alert(`Loss amount saved: $${lossAmount}`);
+        }
+
+
+
+
+        function calculateCalendar() {
+            const days = parseInt(document.getElementById('days').value, 10);
+            localStorage.setItem('days', days);
+            const lossAmount = parseFloat(localStorage.getItem('lossAmount')) || 0;
+            const calendarElement = document.getElementById('calendar');
+            const remainingAmountDiv = document.getElementById('remainingAmount');
+
+            calendarElement.innerHTML = '';
+
+            let remainingAmount = lossAmount;
+
+            for (let i = 1; i <= days; i++) {
+                const dayElement = document.createElement('div');
+                dayElement.classList.add('day', 'animate__animated');
+
+                const button = document.createElement('button');
+                const amountToReturn = (lossAmount / days).toFixed(2);
+                button.innerHTML = `Day ${i}<br>(Return: $${amountToReturn})`;
+
+                button.addEventListener('click', () => markDay(i, button));
+
+                const checkmark = document.createElement('span');
+                checkmark.classList.add('checkmark');
+                checkmark.innerHTML = '✓';
+
+                const cross = document.createElement('span');
+                cross.classList.add('cross');
+                cross.innerHTML = '✗';
+
+                const savedState = localStorage.getItem(`day${i}`);
+                if (savedState === 'done') {
+                    checkmark.style.display = 'inline';
+                    cross.style.display = 'none';
+                    remainingAmount -= parseFloat(amountToReturn);
+                } else if (savedState === 'not-done') {
+                    checkmark.style.display = 'none';
+                    cross.style.display = 'inline';
+                }
+
+                dayElement.appendChild(button);
+                dayElement.appendChild(checkmark);
+                dayElement.appendChild(cross);
+
+                calendarElement.appendChild(dayElement);
+            }
+
+            remainingAmountDiv.innerHTML = `Осталось вернуть: $${remainingAmount.toFixed(2)}`;
+        }
+
+
+
+        function markDay(day, button) {
+            const checkmark = button.nextSibling;
+            const cross = button.nextSibling.nextSibling;
+
+            if (confirm(`Did you return the amount for Day ${day}?`)) {
+                checkmark.style.display = 'inline';
+                cross.style.display = 'none';
+                localStorage.setItem(`day${day}`, 'done');
+            } else {
+                checkmark.style.display = 'none';
+                cross.style.display = 'inline';
+                localStorage.setItem(`day${day}`, 'not-done');
+            }
+        }
+        function clearCalendar() {
+            if (confirm("Are you sure you want to clear the calendar?")) {
+                localStorage.clear();
+                document.getElementById('calendar').innerHTML = '';
+            }
+        }
+        window.onload = function () {
+            const savedLossAmount = localStorage.getItem('lossAmount');
+            if (savedLossAmount) {
+                document.getElementById('lossAmount').value = savedLossAmount;
+            }
+            const savedDays = localStorage.getItem('days');
+            if (savedDays) {
+                document.getElementById('days').value = savedDays;
+                calculateCalendar();
+            }
+        };
+
+        document.getElementById('lossAmount').addEventListener('change', saveLoss);
+
+    </script>
+</body>
+
+</html>
